@@ -132,11 +132,8 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
                     }
                     
                     userDetailsArray.append(data)
-                    userDetailsArray.reverse()
-                    
                 }
             }
-            
             tableView.reloadData()
             
         }catch{
@@ -148,15 +145,13 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
     func API_CALLBACK_POST_Data(result: NSDictionary){
         
         if let dictionary = result.value(forKey: "items") as? NSArray{
-
+            var newDataFromAPI = [UserData]()
             for dic in dictionary {
                 let data = UserData()
                 data.initDic(result:dic as! NSDictionary)
-                userDetailsArray.append(data)
-                saveDataToCoreData(data:data)
+                newDataFromAPI.append(data)
             }
-            tableView.reloadData()
-            
+            saveDataToCoreData(newDatas:newDataFromAPI)
         }else{
             return
         }
@@ -164,20 +159,46 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     // storing data to Core Data
-    func saveDataToCoreData(data:UserData){
-        let user = NSEntityDescription.insertNewObject(forEntityName: "Users", into: context!)
+    func saveDataToCoreData(newDatas:[UserData]){
         
-        user.setValue(data.firstName, forKey: "firstName")
-        user.setValue(data.lastName, forKey: "lastName")
-        user.setValue(data.emailId, forKey: "emailId")
-        user.setValue(data.imageUrl, forKey: "imageUrl")
+        let request = NSFetchRequest<NSFetchRequestResult>(entityName: "Users")
+        request.resultType = .dictionaryResultType
+        request.propertiesToFetch = ["emailId"]
         
         do{
-            try context?.save()
-            print("SAVED")
+            if let results = try context?.fetch(request) as! [[String:Any]]? {
+                let idSet = Set<String>(results.compactMap({ (dict) -> String? in
+                    return dict["emailId"] as? String
+                }))
+                
+                for newData in newDatas {
+                    if let emailId = newData.emailId {
+                        if !idSet.contains(emailId) {
+                            let user = NSEntityDescription.insertNewObject(forEntityName: "Users", into: context!)
+                            user.setValue(newData.firstName, forKey: "firstName")
+                            user.setValue(newData.lastName, forKey: "lastName")
+                            user.setValue(newData.emailId, forKey: "emailId")
+                            user.setValue(newData.imageUrl, forKey: "imageUrl")
+                            
+                            do{
+                                try context?.save()
+                                print("SAVED")
+                            }catch{
+                                
+                            }
+                            
+                            userDetailsArray.append(newData)
+                            tableView.reloadData()
+                        }
+                    }
+                }
+                
+            }
+            
         }catch{
             
         }
+        
     }
     
     
