@@ -8,16 +8,14 @@
 
 import UIKit
 
-class UserData:NSObject {
+class UserData:Decodable {
+    
+    var items:[data1]?
+}
+
+class data1:Decodable{
     var emailId:String?
     var firstName:String?
     var lastName:String?
     var imageUrl:String?
-    
-    func initDic(result:NSDictionary) {
-        emailId = result["emailId"] as? String
-        firstName = result["firstName"] as? String
-        lastName = result["lastName"] as? String
-        imageUrl = result["imageUrl"] as? String
-    }
 }

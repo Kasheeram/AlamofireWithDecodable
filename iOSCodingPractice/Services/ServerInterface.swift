@@ -19,7 +19,7 @@ var SERVER_ERROR = "Some thing went wrong, please try again"
     func API_CALLBACK_Error(errorNumber:Int,errorMessage:String,
                             apiName : String)
     
-    @objc optional func API_CALLBACK_POST_Data(result : NSDictionary)
+    @objc optional func API_CALLBACK_POST_Data(result : Data)
     
 }
 
@@ -35,21 +35,18 @@ class ServerInterface: NSObject {
             response in
             switch response.result{
             case .success:
-                if let JSON = response.result.value {
-                    self.findCallbackForApiName(apiName: apiName, resultDict: JSON as! NSDictionary, delegate: delegate)
-                }
-                break
+                let data = response.data
+                self.findCallbackForApiName(apiName: apiName, resultDict: data as! Data, delegate: delegate)
+            break
             case .failure(let error):
-                print(error)
-                
                 delegate.API_CALLBACK_Error(errorNumber: 0,errorMessage:SERVER_ERROR,apiName : apiName )
             }
         }
         
     }
     
-    
-    func findCallbackForApiName(apiName : String, resultDict : NSDictionary,delegate : ServerAPIDelegate){
+
+    func findCallbackForApiName(apiName : String, resultDict : Data,delegate : ServerAPIDelegate){
         delegate.API_CALLBACK_POST_Data!(result: resultDict)
     }
 }

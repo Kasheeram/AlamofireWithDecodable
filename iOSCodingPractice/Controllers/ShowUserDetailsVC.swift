@@ -12,8 +12,7 @@ import CoreData
 class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataSource, ServerAPIDelegate{
 
     let CellId = "CellId"
-    
-    var userDetailsArray = [UserData]()
+    var userItemArray = [data1]()
     var emailId:String?
     
     var appDelegate:AppDelegate?
@@ -116,7 +115,7 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
             if (results?.count)! > 0{
                 for result in results as! [NSManagedObject]{
                     
-                    let data = UserData()
+                    let data = data1()
                     
                     if let firstName = result.value(forKey: "firstName") as? String{
                         data.firstName = firstName
@@ -131,7 +130,7 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
                         data.imageUrl = imageUrl
                     }
                     
-                    userDetailsArray.append(data)
+                    userItemArray.append(data)
                 }
             }
             tableView.reloadData()
@@ -142,24 +141,20 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     // call back respone
-    func API_CALLBACK_POST_Data(result: NSDictionary){
+    func API_CALLBACK_POST_Data(result: Data){
         
-        if let dictionary = result.value(forKey: "items") as? NSArray{
-            var newDataFromAPI = [UserData]()
-            for dic in dictionary {
-                let data = UserData()
-                data.initDic(result:dic as! NSDictionary)
-                newDataFromAPI.append(data)
-            }
-            saveDataToCoreData(newDatas:newDataFromAPI)
-        }else{
-            return
+        let data = result
+        do {
+            let users = try JSONDecoder().decode(UserData.self, from: data)
+                saveDataToCoreData(newDatas:users)
+        } catch let jsonErr {
+            print("Error serializing json: ",jsonErr)
         }
-        
+
     }
     
     // storing data to Core Data
-    func saveDataToCoreData(newDatas:[UserData]){
+    func saveDataToCoreData(newDatas:UserData){
         
         let request = NSFetchRequest<NSFetchRequestResult>(entityName: "Users")
         request.resultType = .dictionaryResultType
@@ -170,7 +165,7 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
                 let idSet = Set<String>(results.compactMap({ (dict) -> String? in
                     return dict["emailId"] as? String
                 }))
-                
+                guard let newDatas = newDatas.items else { return }
                 for newData in newDatas {
                     if let emailId = newData.emailId {
                         if !idSet.contains(emailId) {
@@ -179,15 +174,15 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
                             user.setValue(newData.lastName, forKey: "lastName")
                             user.setValue(newData.emailId, forKey: "emailId")
                             user.setValue(newData.imageUrl, forKey: "imageUrl")
-                            
+
                             do{
                                 try context?.save()
                                 print("SAVED")
                             }catch{
-                                
+
                             }
-                            
-                            userDetailsArray.append(newData)
+
+                            userItemArray.append(newData)
                             tableView.reloadData()
                         }
                     }
@@ -207,12 +202,12 @@ class ShowUserDetailsVC: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return userDetailsArray.count
+        return userItemArray.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: CellId, for: indexPath) as! UserDetailTVCell
-        cell.setValues(entity: userDetailsArray[indexPath.row])
+        cell.setValues(entity: userItemArray[indexPath.row])
         return cell
     }
     

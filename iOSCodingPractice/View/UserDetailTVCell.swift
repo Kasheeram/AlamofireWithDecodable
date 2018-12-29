@@ -78,7 +78,7 @@ class UserDetailTVCell: UITableViewCell {
         // Configure the view for the selected state
     }
     
-    func setValues(entity:UserData){
+    func setValues(entity:data1){
         profileImageView2.sd_setImage(with: URL(string: entity.imageUrl ?? ""), placeholderImage: UIImage(named: "user"))
         nameLabel.text = "\(entity.firstName ?? "" ) \(entity.lastName ?? "" )"
         emaiLabel.text = entity.emailId
